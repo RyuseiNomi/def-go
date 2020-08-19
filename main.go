@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -38,7 +39,6 @@ func main() {
 	}
 }
 
-// handle メインの画面の描画設定と表示を行う
 func handle() {
 	containers, err := getContainers()
 	if err != nil {
@@ -47,20 +47,47 @@ func handle() {
 	setScreen(containers)
 }
 
+// setScreen メインの画面の描画設定と表示を行う
 func setScreen(c []container) {
 	app := tview.NewApplication()
+	page := tview.NewPages()
+
+	// コンテナ一覧を表示するためのリスト
 	list := tview.NewList()
 	for _, container := range c {
 		list.AddItem(container.name, container.status, 'a', func() {
-			app.Stop()
+			showModal(container, page, app)
 		})
 	}
 	list.AddItem("Quit", "Press to exit", 'q', func() {
 		app.Stop()
 	})
-	if err := app.SetRoot(list, true).SetFocus(list).Run(); err != nil {
+
+	page.AddPage("list", list, true, true)
+	if err := app.SetRoot(page, true).SetFocus(page).Run(); err != nil {
 		panic(err)
 	}
+}
+
+// showModal モーダルをアプリのページに表示する
+func showModal(c container, p *tview.Pages, app *tview.Application) {
+	// モーダル
+	modal := tview.NewModal().
+		SetText("What do you want to next?").
+		AddButtons([]string{"Exec", "Stop", "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Cancel" {
+				p.RemovePage("modal")
+				return
+			}
+			if buttonLabel == "Exec" {
+				execContainer(c)
+			}
+			if buttonLabel == "Stop" {
+				stopContainer(c)
+			}
+		})
+	p.AddPage("modal", modal, true, true)
 }
 
 // getContainers 外部コマンドを実行し、Dockerコンテナを取得する
@@ -95,4 +122,21 @@ func getContainers() ([]container, error) {
 	}
 
 	return containers, nil
+}
+
+func execContainer(c container) error {
+	out, err := exec.Command("docker", "exec", "-it", c.name, "bash").Output()
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(out))
+	return nil
+}
+
+func stopContainer(c container) error {
+	err := exec.Command("docker", "stop", c.name).Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
