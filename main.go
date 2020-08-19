@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -74,17 +73,17 @@ func showModal(c container, p *tview.Pages, app *tview.Application) {
 	// モーダル
 	modal := tview.NewModal().
 		SetText("What do you want to next?").
-		AddButtons([]string{"Exec", "Stop", "Cancel"}).
+		AddButtons([]string{"Start", "Stop", "Cancel"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "Cancel" {
 				p.RemovePage("modal")
 				return
 			}
-			if buttonLabel == "Exec" {
-				execContainer(c)
+			if buttonLabel == "Start" {
+				startContainer(c, p)
 			}
 			if buttonLabel == "Stop" {
-				stopContainer(c)
+				stopContainer(c, p)
 			}
 		})
 	p.AddPage("modal", modal, true, true)
@@ -96,7 +95,7 @@ func getContainers() ([]container, error) {
 	var containers []container
 
 	// 外部コマンドの実行よりコンテナ一覧を取得
-	out, err := exec.Command("docker", "ps", "--format", "\"{{.ID}} {{.Names}} {{.Status}}\"").Output()
+	out, err := exec.Command("docker", "ps", "-a", "--format", "\"{{.ID}} {{.Names}} {{.Status}}\"").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -124,19 +123,42 @@ func getContainers() ([]container, error) {
 	return containers, nil
 }
 
-func execContainer(c container) error {
-	out, err := exec.Command("docker", "exec", "-it", c.name, "bash").Output()
+func startContainer(c container, p *tview.Pages) error {
+	_, err := exec.Command("docker", "start", c.name).Output()
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(out))
+	p.RemovePage("modal")
+
+	// 起動完了モーダル
+	completeModal := tview.NewModal().
+		SetText("Completed to start the container!").
+		AddButtons([]string{"Ok"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Ok" {
+				p.RemovePage("completeModal")
+			}
+		})
+	p.AddPage("completeModal", completeModal, true, true)
 	return nil
 }
 
-func stopContainer(c container) error {
-	err := exec.Command("docker", "stop", c.name).Run()
+func stopContainer(c container, p *tview.Pages) error {
+	_, err := exec.Command("docker", "stop", c.name).Output()
 	if err != nil {
 		return err
 	}
+	p.RemovePage("modal")
+
+	// 消去完了モーダル
+	completeModal := tview.NewModal().
+		SetText("Completed to stop the container!").
+		AddButtons([]string{"Ok"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "Ok" {
+				p.RemovePage("completeModal")
+			}
+		})
+	p.AddPage("completeModal", completeModal, true, true)
 	return nil
 }
