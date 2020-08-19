@@ -16,6 +16,11 @@ type container struct {
 	status string
 }
 
+type workFlowManager struct {
+	reflesh chan bool
+	exit    chan bool
+}
+
 const (
 	containerIDIndex = 0
 	namesIndex       = 1
@@ -52,20 +57,27 @@ func setScreen(c []container) {
 	page := tview.NewPages()
 
 	// コンテナ一覧を表示するためのリスト
+	list := setContainerList(c, page, app)
+
+	page.AddPage("list", list, true, true)
+	if err := app.SetRoot(page, true).SetFocus(page).Run(); err != nil {
+		panic(err)
+	}
+}
+
+func setContainerList(c []container, page *tview.Pages, app *tview.Application) *tview.List {
+	// コンテナ一覧を表示するためのリスト
 	list := tview.NewList()
 	for _, container := range c {
 		list.AddItem(container.name, container.status, 'a', func() {
+			// コンテナが選択された時に出現するモーダル
 			showModal(container, page, app)
 		})
 	}
 	list.AddItem("Quit", "Press to exit", 'q', func() {
 		app.Stop()
 	})
-
-	page.AddPage("list", list, true, true)
-	if err := app.SetRoot(page, true).SetFocus(page).Run(); err != nil {
-		panic(err)
-	}
+	return list
 }
 
 // showModal モーダルをアプリのページに表示する
