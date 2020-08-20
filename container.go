@@ -57,18 +57,6 @@ func StartContainer(c Container, p *tview.Pages) error {
 	if err != nil {
 		return err
 	}
-	p.RemovePage("modal")
-
-	// 起動完了モーダル
-	completeModal := tview.NewModal().
-		SetText("Completed to start the container!").
-		AddButtons([]string{"Ok"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			if buttonLabel == "Ok" {
-				p.RemovePage("completeModal")
-			}
-		})
-	p.AddPage("completeModal", completeModal, true, true)
 	return nil
 }
 
@@ -78,17 +66,5 @@ func StopContainer(c Container, p *tview.Pages) error {
 	if err != nil {
 		return err
 	}
-	p.RemovePage("modal")
-
-	// 消去完了モーダル
-	completeModal := tview.NewModal().
-		SetText("Completed to stop the container!").
-		AddButtons([]string{"Ok"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			if buttonLabel == "Ok" {
-				p.RemovePage("completeModal")
-			}
-		})
-	p.AddPage("completeModal", completeModal, true, true)
 	return nil
 }

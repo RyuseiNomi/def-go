@@ -30,10 +30,38 @@ func showModal(c Container, p *tview.Pages, app *tview.Application) {
 				return
 			}
 			if buttonLabel == "Start" {
-				StartContainer(c, p)
+				if err := StartContainer(c, p); err != nil {
+					panic(err)
+				}
+				p.RemovePage("modal")
+
+				// 起動完了モーダル
+				completeModal := tview.NewModal().
+					SetText("Completed to start the container!").
+					AddButtons([]string{"Ok"}).
+					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+						if buttonLabel == "Ok" {
+							p.RemovePage("completeModal")
+						}
+					})
+				p.AddPage("completeModal", completeModal, true, true)
 			}
 			if buttonLabel == "Stop" {
-				StopContainer(c, p)
+				if err := StopContainer(c, p); err != nil {
+					panic(err)
+				}
+				p.RemovePage("modal")
+
+				// 消去完了モーダル
+				completeModal := tview.NewModal().
+					SetText("Completed to stop the container!").
+					AddButtons([]string{"Ok"}).
+					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+						if buttonLabel == "Ok" {
+							p.RemovePage("completeModal")
+						}
+					})
+				p.AddPage("completeModal", completeModal, true, true)
 			}
 		})
 	p.AddPage("modal", modal, true, true)
