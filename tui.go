@@ -3,13 +3,14 @@ package main
 import "github.com/rivo/tview"
 
 // GetList コンテナ一覧を表示するためのアイテムを取得
-func GetList(cs Containers, page *tview.Pages, app *tview.Application) *tview.List {
+func GetList(cs Containers, p *tview.Pages, app *tview.Application) *tview.List {
 	// コンテナ一覧を表示するためのリスト
 	list := tview.NewList()
 	for _, container := range cs {
 		list.AddItem(container.name, container.status, 'a', func() {
 			// コンテナが選択された時に出現するモーダル
-			showModal(container, page, app)
+			modal := getModal(container, p)
+			p.AddPage("modal", modal, true, true)
 		})
 	}
 	list.AddItem("Quit", "Press to exit", 'q', func() {
@@ -19,7 +20,7 @@ func GetList(cs Containers, page *tview.Pages, app *tview.Application) *tview.Li
 }
 
 // ShowModal モーダルをアプリのページに表示する
-func showModal(c Container, p *tview.Pages, app *tview.Application) {
+func getModal(c Container, p *tview.Pages) *tview.Modal {
 	// モーダル
 	modal := tview.NewModal().
 		SetText("What do you want to next?").
@@ -30,7 +31,7 @@ func showModal(c Container, p *tview.Pages, app *tview.Application) {
 				return
 			}
 			if buttonLabel == "Start" {
-				if err := StartContainer(c, p); err != nil {
+				if err := StartContainer(c); err != nil {
 					panic(err)
 				}
 				p.RemovePage("modal")
@@ -47,7 +48,7 @@ func showModal(c Container, p *tview.Pages, app *tview.Application) {
 				p.AddPage("completeModal", completeModal, true, true)
 			}
 			if buttonLabel == "Stop" {
-				if err := StopContainer(c, p); err != nil {
+				if err := StopContainer(c); err != nil {
 					panic(err)
 				}
 				p.RemovePage("modal")
@@ -64,5 +65,5 @@ func showModal(c Container, p *tview.Pages, app *tview.Application) {
 				p.AddPage("completeModal", completeModal, true, true)
 			}
 		})
-	p.AddPage("modal", modal, true, true)
+	return modal
 }

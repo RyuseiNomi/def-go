@@ -3,8 +3,6 @@ package main
 import (
 	"os/exec"
 	"strings"
-
-	"github.com/rivo/tview"
 )
 
 // Container リストに表示するコンテナモデル
@@ -52,7 +50,7 @@ func GetContainers() (Containers, error) {
 }
 
 // StartContainer コンテナを起動する外部コマンドを実行する
-func StartContainer(c Container, p *tview.Pages) error {
+func StartContainer(c Container) error {
 	_, err := exec.Command("docker", "start", c.name).Output()
 	if err != nil {
 		return err
@@ -61,7 +59,7 @@ func StartContainer(c Container, p *tview.Pages) error {
 }
 
 // StopContainer コンテナを停止する外部コマンドを実行する
-func StopContainer(c Container, p *tview.Pages) error {
+func StopContainer(c Container) error {
 	_, err := exec.Command("docker", "stop", c.name).Output()
 	if err != nil {
 		return err
